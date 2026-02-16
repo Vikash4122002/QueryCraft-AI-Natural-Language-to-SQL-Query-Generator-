@@ -1,0 +1,33 @@
+# FastAPI and Server
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# Database
+mysql-connector-python==8.2.0
+SQLAlchemy==2.0.25
+pymysql==1.1.0
+
+# LangChain
+langchain==0.1.0
+langchain-groq==0.0.1
+langchain-community==0.0.13
+langchain-experimental==0.0.47
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.3
+openpyxl==3.1.2
+chardet==5.2.0
+
+# Visualization
+plotly==5.18.0
+
+# Logging and Utilities
+loguru==0.7.2
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# AI/ML
+groq==0.4.1

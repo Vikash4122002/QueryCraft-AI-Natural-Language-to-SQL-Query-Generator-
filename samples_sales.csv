@@ -1,0 +1,16 @@
+product,category,price,quantity,region,sale_date,sales_person
+Laptop Pro,Electronics,1299.99,2,West,2024-02-10,Alice Johnson
+Wireless Mouse,Electronics,29.99,5,East,2024-02-09,Bob Smith
+Office Desk,Furniture,349.99,1,North,2024-02-08,Charlie Brown
+Ergonomic Chair,Furniture,249.99,3,South,2024-02-07,Diana Prince
+LED Monitor,Electronics,299.99,2,West,2024-02-06,Alice Johnson
+Keyboard,Electronics,79.99,4,East,2024-02-05,Bob Smith
+Desk Lamp,Furniture,39.99,6,North,2024-02-04,Charlie Brown
+Notebook Set,Stationery,12.99,10,South,2024-02-03,Diana Prince
+Pen Pack,Stationery,5.99,15,West,2024-02-02,Alice Johnson
+Water Bottle,Accessories,19.99,8,East,2024-02-01,Bob Smith
+USB Drive,Electronics,24.99,12,North,2024-01-31,Charlie Brown
+Mouse Pad,Accessories,9.99,20,South,2024-01-30,Diana Prince
+Laptop Stand,Furniture,49.99,4,West,2024-01-29,Alice Johnson
+Webcam,Electronics,89.99,3,East,2024-01-28,Bob Smith
+Headphones,Electronics,149.99,5,North,2024-01-27,Charlie Brown

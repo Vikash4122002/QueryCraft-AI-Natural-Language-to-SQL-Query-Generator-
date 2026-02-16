@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueryCraft - AI-Powered SQL Generator</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 3.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            font-size: 1.3em;
+            opacity: 0.95;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 15px;
+            background: #f55036;
+            color: white;
+            border-radius: 15px;
+            font-size: 0.7em;
+            font-weight: 700;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.15);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 12px 25px;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+        
+        .status-dot.online {
+            background: #28a745;
+            box-shadow: 0 0 15px #28a745;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 50px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f8f9ff;
+        }
+        
+        .upload-area:hover {
+            border-color: #5568d3;
+            background: #f0f2ff;
+        }
+        
+        .upload-area.dragging {
+            border-color: #28a745;
+            background: #f0fff4;
+        }
+        
+        .upload-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn {
+            padding: 14px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .examples {
+            margin-top: 20px;
+        }
+        
+        .example-btn {
+            display: inline-block;
+            padding: 10px 18px;
+            margin: 5px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .example-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .sql-display {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #c53030;
+        }
+        
+        .success {
+            background: #f0fff4;
+            color: #22543d;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #28a745;
+        }
+        
+        .section-title {
+            font-size: 1.6em;
+            margin: 25px 0 15px;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .table-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .table-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        
+        .table-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .table-name {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .table-count {
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔮 QueryCraft</h1>
+            <p>AI-Powered SQL Generator <span class="badge">⚡ GROQ</span></p>
+        </div>
+        
+        <div class="card">
+            <div class="status-bar" id="statusBar">
+                <div class="status-item">
+                    <span class="status-dot" id="dbStatus"></span>
+                    <span>Database</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot" id="groqStatus"></span>
+                    <span>Groq LLM</span>
+                </div>
+                <div class="status-item">
+                    <strong id="modelName">llama-3.3-70b-versatile</strong>
+                </div>
+                <div class="status-item">
+                    <strong id="tableCount">0 Tables</strong>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('query')">
+                    💬 Query
+                </button>
+                <button class="tab" onclick="switchTab('upload')">
+                    📤 Upload Dataset
+                </button>
+                <button class="tab" onclick="switchTab('tables')">
+                    📊 Tables
+                </button>
+            </div>
+            
+            <!-- Query Tab -->
+            <div id="queryTab" class="tab-content active">
+                <h2 class="section-title">Ask a Question</h2>
+                <textarea 
+                    id="queryInput" 
+                    placeholder="e.g., Show me total sales by region"
+                ></textarea>
+                
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="executeQuery()">
+                        ⚡ Generate SQL
+                    </button>
+                    <button class="btn btn-secondary" onclick="clearResults()">
+                        Clear
+                    </button>
+                </div>
+                
+                <div class="examples">
+                    <p style="font-weight: 600; margin-bottom: 10px;">📝 Try these examples:</p>
+                    <span class="example-btn" onclick="setQuery('Show me all data from the sales table')">
+                        All sales data
+                    </span>
+                    <span class="example-btn" onclick="setQuery('What are the top 5 products by revenue?')">
+                        Top products
+                    </span>
+                    <span class="example-btn" onclick="setQuery('Show me total sales by region')">
+                        Sales by region
+                    </span>
+                    <span class="example-btn" onclick="setQuery('Show me sales from last month')">
+                        Last month sales
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Upload Tab -->
+            <div id="uploadTab" class="tab-content">
+                <h2 class="section-title">Upload Your Dataset</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    Upload CSV, Excel, JSON, or TSV files to create database tables
+                </p>
+                
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <h3>Click to upload or drag and drop</h3>
+                    <p style="margin-top: 10px; color: #666;">
+                        Supported: CSV, XLSX, XLS, JSON, TSV (max 10MB)
+                    </p>
+                </div>
+                
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.json,.tsv" onchange="handleFileSelect(event)">
+                
+                <div style="margin-top: 20px;">
+                    <label for="tableName" style="display: block; margin-bottom: 8px; font-weight: 600;">
+                        Table Name:
+                    </label>
+                    <input type="text" id="tableName" placeholder="e.g., my_sales_data">
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="uploadDataset()" id="uploadBtn" disabled>
+                        Upload & Create Table
+                    </button>
+                </div>
+                
+                <div id="uploadStatus"></div>
+            </div>
+            
+            <!-- Tables Tab -->
+            <div id="tablesTab" class="tab-content">
+                <h2 class="section-title">Database Tables</h2>
+                <button class="btn btn-secondary" onclick="loadTables()">
+                    🔄 Refresh Tables
+                </button>
+                
+                <div id="tablesList" class="table-list">
+                    <p style="color: #666;">Loading tables...</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="loadingSection" class="card loading" style="display: none;">
+            <div class="spinner"></div>
+            <p style="font-size: 1.2em; color: #667eea; font-weight: 600;">
+                🔄 Generating SQL with Groq...
+            </p>
+        </div>
+        
+        <div id="resultsSection" class="card" style="display: none;">
+            <div id="errorContainer"></div>
+            
+            <div id="explanationContainer" style="display: none;">
+                <h2 class="section-title">📝 Explanation</h2>
+                <div id="explanationText" class="info-box"></div>
+            </div>
+            
+            <div id="sqlContainer">
+                <h2 class="section-title">🔧 Generated SQL</h2>
+                <div id="sqlDisplay" class="sql-display"></div>
+            </div>
+            
+            <div id="tableContainer">
+                <h2 class="section-title">
+                    📊 Query Results
+                    <span id="rowCount" class="badge"></span>
+                </h2>
+                <div class="table-container">
+                    <table id="resultsTable"></table>
+                </div>
+            </div>
+            
+            <div id="chartContainer" style="display: none;">
+                <h2 class="section-title">📈 Visualization</h2>
+                <div id="chartDiv" style="min-height: 400px;"></div>
+            </div>
+            
+            <div id="executionTime" style="margin-top: 20px; color: #666; text-align: right;"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let selectedFile = null;
+        
+        // Initialize
+        window.onload = async function() {
+            await checkStatus();
+            await loadTables();
+            setInterval(checkStatus, 30000);
+            
+            setupDragAndDrop();
+        };
+        
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            if (tabName === 'tables') {
+                loadTables();
+            }
+        }
+        
+        // Status check
+        async function checkStatus() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                const data = await response.json();
+                
+                document.getElementById('dbStatus').className = 
+                    'status-dot ' + (data.database === 'connected' ? 'online' : 'offline');
+                document.getElementById('groqStatus').className = 
+                    'status-dot ' + (data.groq === 'connected' ? 'online' : 'offline');
+                
+                const statusResponse = await fetch(`${API_URL}/api/status`);
+                const statusData = await statusResponse.json();
+                document.getElementById('modelName').textContent = statusData.groq_model;
+                document.getElementById('tableCount').textContent = 
+                    `${statusData.total_tables} Tables`;
+                
+            } catch (error) {
+                console.error('Status check failed:', error);
+            }
+        }
+        
+        // Load tables
+        async function loadTables() {
+            try {
+                const response = await fetch(`${API_URL}/api/tables`);
+                const data = await response.json();
+                
+                const container = document.getElementById('tablesList');
+                if (data.tables.length === 0) {
+                    container.innerHTML = '<p style="color: #666;">No tables found. Upload a dataset to get started!</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.tables.map(table => `
+                    <div class="table-item">
+                        <div class="table-name">📊 ${table.name}</div>
+                        <div class="table-count">${table.row_count} rows</div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load tables:', error);
+            }
+        }
+        
+        // Drag and drop
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.add('dragging');
+                });
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, () => {
+                    uploadArea.classList.remove('dragging');
+                });
+            });
+            
+            uploadArea.addEventListener('drop', handleDrop);
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length > 0) {
+                selectedFile = files[0];
+                document.getElementById('tableName').value = 
+                    selectedFile.name.split('.')[0].replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+                document.getElementById('uploadBtn').disabled = false;
+                
+                showUploadStatus(`Selected: ${selectedFile.name}`, 'info');
+            }
+        }
+        
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('tableName').value = 
+                    selectedFile.name.split('.')[0].replace(/[^a-z0-9_]/gi, '_').toLowerCase();
+                document.getElementById('uploadBtn').disabled = false;
+                
+                showUploadStatus(`Selected: ${selectedFile.name}`, 'info');
+            }
+        }
+        
+        async function uploadDataset() {
+            if (!selectedFile) {
+                alert('Please select a file first');
+                return;
+            }
+            
+            const tableName = document.getElementById('tableName').value.trim();
+            if (!tableName) {
+                alert('Please enter a table name');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            formData.append('table_name', tableName);
+            
+            showUploadStatus('Uploading...', 'info');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showUploadStatus(
+                        `✅ Success! Table "${tableName}" created with ${data.info.rows} rows`, 
+                        'success'
+                    );
+                    selectedFile = null;
+                    document.getElementById('fileInput').value = '';
+                    document.getElementById('uploadBtn').disabled = true;
+                    
+                    await loadTables();
+                } else {
+                    showUploadStatus(`❌ Error: ${data.detail}`, 'error');
+                }
+                
+            } catch (error) {
+                showUploadStatus(`❌ Upload failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function showUploadStatus(message, type) {
+            const statusDiv = document.getElementById('uploadStatus');
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info-box';
+            statusDiv.innerHTML = `<div class="${className}">${message}</div>`;
+        }
+        
+        // Query functions
+        function setQuery(query) {
+            document.getElementById('queryInput').value = query;
+        }
+        
+        function clearResults() {
+            document.getElementById('queryInput').value = '';
+            document.getElementById('resultsSection').style.display = 'none';
+        }
+        
+        async function executeQuery() {
+            const question = document.getElementById('queryInput').value.trim();
+            
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question: question,
+                        execute: true,
+                        visualize: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('loadingSection').style.display = 'none';
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                displayResults(data);
+                
+            } catch (error) {
+                document.getElementById('loadingSection').style.display = 'none';
+                showError('Connection error: ' + error.message);
+            }
+        }
+        
+        function showError(message) {
+            document.getElementById('errorContainer').innerHTML = 
+                `<div class="error">❌ ${message}</div>`;
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+        
+        function displayResults(data) {
+            if (data.explanation) {
+                document.getElementById('explanationText').textContent = data.explanation;
+                document.getElementById('explanationContainer').style.display = 'block';
+            }
+            
+            document.getElementById('sqlDisplay').textContent = 
+                formatSQL(data.sql) || '-- No SQL generated --';
+            
+            if (data.results && data.results.length > 0) {
+                document.getElementById('rowCount').textContent = `${data.results.length} rows`;
+                displayTable(data.results);
+                
+                if (data.visualization) {
+                    displayChart(data.visualization);
+                }
+            } else {
+                document.getElementById('tableContainer').innerHTML = 
+                    '<p style="padding: 20px; color: #666;">No results found</p>';
+            }
+            
+            document.getElementById('executionTime').innerHTML = 
+                `⚡ Completed in ${data.execution_time?.toFixed(2)}s`;
+            
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+        
+        function formatSQL(sql) {
+            if (!sql) return '';
+            return sql.replace(/SELECT/gi, 'SELECT\n  ')
+                     .replace(/FROM/gi, '\nFROM\n  ')
+                     .replace(/WHERE/gi, '\nWHERE\n  ')
+                     .replace(/GROUP BY/gi, '\nGROUP BY\n  ')
+                     .replace(/ORDER BY/gi, '\nORDER BY\n  ')
+                     .trim();
+        }
+        
+        function displayTable(results) {
+            const table = document.getElementById('resultsTable');
+            table.innerHTML = '';
+            
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            Object.keys(results[0]).forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            const tbody = document.createElement('tbody');
+            results.forEach(row => {
+                const tr = document.createElement('tr');
+                Object.values(row).forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = value ?? '-';
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(tbody);
+        }
+        
+        function displayChart(chartData) {
+            try {
+                document.getElementById('chartContainer').style.display = 'block';
+                Plotly.newPlot('chartDiv', chartData.data, chartData.layout);
+            } catch (error) {
+                console.error('Chart error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

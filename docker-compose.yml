@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: querycraft_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: querycraft_db
+      MYSQL_USER: querycraft_user
+      MYSQL_PASSWORD: querycraft_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - querycraft_network
+
+  api:
+    build: .
+    container_name: querycraft_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+mysqlconnector://querycraft_user:querycraft_pass@mysql:3306/querycraft_db
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=querycraft_user
+      - MYSQL_PASSWORD=querycraft_pass
+      - MYSQL_DATABASE=querycraft_db
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+      - DEBUG=${DEBUG:-False}
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./data:/app/data
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - querycraft_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: querycraft_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - querycraft_network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  querycraft_network:
+    driver: bridge
